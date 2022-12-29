@@ -66,6 +66,21 @@ async function run(){
             const resualt = await orderCollections.deleteOne(query);
             res.send(resualt)
         })
+
+        //update
+        app.patch('/orders/:id', async(req,res) => {
+            const id = req.params.id;
+            const status = req.body.status;  
+            console.log(status)
+            const  query = {_id : ObjectId(id)}
+            const updateDoc = {
+                $set: {
+                    status : status
+                }
+            }
+            const resualt = await orderCollections.updateOne(query, updateDoc);
+            res.send(resualt)
+        })
         
     }
     finally{
