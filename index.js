@@ -1,5 +1,6 @@
 const express = require(`express`);
-const cors = require(`cors`)
+const cors = require(`cors`);
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
@@ -18,10 +19,41 @@ console.log(uri)
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
  
 
+// jwt verify function
+function jwtverify(req, res,next){
+    const authHeader = req.headers.authorization;
+    console.log(authHeader);
+    if(!authHeader){
+        return res.status(401).send({message: 'unautharized access'})
+    }
+
+    const token = authHeader.split(` `)[1]
+    //token match koranor kaj kora hoyece
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
+        if(err){
+            return res.status(403).send({message: `forbidden access`})
+        }
+        req.decoded = decoded;
+        next()
+    })
+
+}
+
+
+
 async function run(){
     try{
         const servicesCollections = client.db('geniuscar').collection('services')
         const orderCollections = client.db('geniuscar').collection('orders')
+
+
+        //jwt token emplement:
+        app.post('/jwt', (req,res) =>{
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '7d'})
+            res.send({token})
+             
+        })
 
         app.get('/services',async(req,res) => {
             const query =  {}
@@ -44,8 +76,16 @@ async function run(){
         })
 
          //get specific order specific user email 
-         app.get(`/orders`, async(req,res) => {
+         app.get(`/orders`, jwtverify, async(req,res) => {
             //console.log(req.query.email);
+            //console.log(req.headers.authorization);
+            const decoded =req.decoded;
+            console.log(decoded)
+
+            if(decoded !== req.query.email){
+                res.status(401).send({message: `unathorized acess`})
+            }
+
             let query = {};
 
             if (req.query.email) {
