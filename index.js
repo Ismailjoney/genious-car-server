@@ -80,9 +80,9 @@ async function run(){
             //console.log(req.query.email);
             //console.log(req.headers.authorization);
             const decoded =req.decoded;
-            console.log(decoded)
+            //console.log(decoded)
 
-            if(decoded !== req.query.email){
+            if(decoded.email !== req.query.email){
                 res.status(401).send({message: `unathorized acess`})
             }
 
